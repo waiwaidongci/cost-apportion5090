@@ -2,9 +2,10 @@ from fastapi import HTTPException
 from src.models.source import Source,Policy,Period
 from src.services.validation import validate_source,validate_policy
 from src.services.audit import log
+from src.services.locking import acquire_snapshot_lock
 import uuid
 def save_source(db,user,data,id=None):
- validate_source(data)
+ validate_source(data);acquire_snapshot_lock(db)
  obj=db.get(Source,id) if id else Source(natural_key='user-'+uuid.uuid4().hex)
  if not obj: raise HTTPException(404,'底稿不存在')
  obj.data=data;db.add(obj)

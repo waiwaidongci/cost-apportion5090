@@ -5,6 +5,7 @@ from src.models.source import Source,Policy,Period
 from src.schemas.requests import DataInput
 from src.services.source import save_source,save_policy
 from src.services.audit import log
+from src.services.locking import acquire_snapshot_lock
 from src.utils.serialize import row
 router=APIRouter()
 @router.get('/sources')
@@ -21,6 +22,7 @@ def update(id:int,b:DataInput,db=Depends(database),u=Depends(editor)): return ro
 def delete(id:int,db=Depends(database),u=Depends(editor)):
  obj=db.get(Source,id)
  if not obj: raise HTTPException(404,'底稿不存在')
+ acquire_snapshot_lock(db)
  db.delete(obj);log(db,u.email,'source.delete',id);db.commit();return {'deleted':id}
 @router.get('/policies')
 def policies(db=Depends(database),u=Depends(current)): return [row(x) for x in db.query(Policy).order_by(Policy.id).all()]
